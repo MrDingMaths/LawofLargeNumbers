@@ -10,7 +10,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
-            background: #87cefa;
+            background: white;
             min-height: 100vh;
         }
         
@@ -249,7 +249,7 @@
         
         <div class="chart-container">
             <h3>Relative Frequency Distribution</h3>
-            <canvas id="histogram" width="800" height="400"></canvas>
+            <canvas id="histogram" width="600" height="400"></canvas>
         </div>
     </div>
     
@@ -342,7 +342,7 @@
             const halfBarWidth = barWidth / 2;
             
             // Draw bars
-            ctx.fillStyle = 'rgba(50, 150, 250, 0.8)';
+            ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
             ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
             ctx.lineWidth = 2;
             
@@ -364,7 +364,7 @@
                             x + barWidth / 2, y - 5);
                 
                 // Reset fill style for next bar
-                ctx.fillStyle = 'rgba(50, 150, 250, 0.8)';
+                ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
             }
             
             // Draw theoretical probability line
