@@ -76,7 +76,7 @@
         
         .results-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 2fr 5fr;
             gap: 20px;
             margin-top: 20px;
         }
@@ -119,12 +119,28 @@
             overflow: hidden;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
+
+        th, td {
+            width: 33.33%;
+            text-align: center;
+        }
+
+        th:first-child, td:first-child {
+            width: 15%;
+        }
+
+        th:nth-child(2), td:nth-child(2) {
+            width: 20%;
+        }
+
+        th:last-child, td:last-child {
+            width: 65%;
+        }
         
         th {
             background: #4169e1;
             color: white;
             padding: 12px;
-            text-align: left;
             font-weight: 600;
         }
         
@@ -142,6 +158,13 @@
         }
         
         .chart-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .roll-results-container {
             margin-top: 30px;
             background: white;
             border-radius: 10px;
@@ -209,22 +232,12 @@
                 <div class="stat-value" id="totalRolls">0</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Theoretical Probability</div>
-                <div class="stat-value">16.67%</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-label">Max Deviation</div>
                 <div class="stat-value" id="maxDeviation">0%</div>
             </div>
         </div>
         
         <div class="results-container">
-            <div>
-                <h3>Roll Results</h3>
-                <div class="results-list" id="resultsList">
-                    No rolls yet. Click a button to start!
-                </div>
-            </div>
             <div>
                 <h3>Frequency Table</h3>
                 <table id="frequencyTable">
@@ -245,11 +258,17 @@
                     </tbody>
                 </table>
             </div>
+            <div class="chart-container">
+                <h3>Relative Frequency Distribution</h3>
+                <canvas id="histogram" width="500" height="300"></canvas>
+            </div>
         </div>
-        
-        <div class="chart-container">
-            <h3>Relative Frequency Distribution</h3>
-            <canvas id="histogram" width="600" height="400"></canvas>
+
+        <div class="roll-results-container">
+            <h3>Roll Results</h3>
+            <div class="results-list" id="resultsList">
+                No rolls yet. Click a button to start!
+            </div>
         </div>
     </div>
     
@@ -261,8 +280,18 @@
             for (let i = 0; i < times; i++) {
                 newRolls.push(Math.floor(Math.random() * 6) + 1);
             }
+
+            // Track which columns need animation
+            const affectedColumns = new Set();
+            newRolls.forEach(roll => {
+                affectedColumns.add(roll - 1);
+            });
+
             allRolls = allRolls.concat(newRolls);
             updateDisplay();
+
+            // Animate affected histogram columns
+            animateHistogramColumns(affectedColumns);
         }
         
         function resetAll() {
@@ -314,13 +343,17 @@
             drawHistogram(frequencies);
         }
         
-        function drawHistogram(frequencies) {
+        let currentHeights = [0, 0, 0, 0, 0, 0];
+        let targetHeights = [0, 0, 0, 0, 0, 0];
+        let animationId = null;
+
+        function drawHistogram(frequencies, useCurrentHeights = false) {
             const canvas = document.getElementById('histogram');
             const ctx = canvas.getContext('2d');
-            
+
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
+
             if (allRolls.length === 0) {
                 ctx.font = '16px Arial';
                 ctx.fillStyle = '#999';
@@ -328,45 +361,57 @@
                 ctx.fillText('No data to display', canvas.width / 2, canvas.height / 2);
                 return;
             }
-            
+
             const margin = { top: 40, right: 40, bottom: 60, left: 60 };
             const chartWidth = canvas.width - margin.left - margin.right;
             const chartHeight = canvas.height - margin.top - margin.bottom;
-            
+
             // Calculate relative frequencies
             const relativeFrequencies = frequencies.map(f => f / allRolls.length);
             const maxRelFreq = Math.max(...relativeFrequencies, 0.3);
-            
+
+            // Set target heights if not animating
+            if (!useCurrentHeights) {
+                targetHeights = relativeFrequencies.slice();
+            }
+
+            // Use current animated heights or target heights
+            const heightsToUse = useCurrentHeights ? currentHeights : relativeFrequencies;
+
             // Calculate bar dimensions
-            const barWidth = chartWidth / 7; // 6 bars + 0.5 for the half-width gap
+            const barWidth = chartWidth / 7; // 6 bars with proper spacing
             const halfBarWidth = barWidth / 2;
-            
+
             // Draw bars
             ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
             ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
             ctx.lineWidth = 2;
-            
+
             for (let i = 0; i < 6; i++) {
-                const barHeight = (relativeFrequencies[i] / maxRelFreq) * chartHeight;
+                const barHeight = (heightsToUse[i] / maxRelFreq) * chartHeight;
                 const x = margin.left + halfBarWidth + (i * barWidth);
                 const y = margin.top + chartHeight - barHeight;
-                
+
                 // Fill bar
                 ctx.fillRect(x, y, barWidth, barHeight);
                 // Stroke bar
                 ctx.strokeRect(x, y, barWidth, barHeight);
-                
+
                 // Draw value on top of bar
                 ctx.fillStyle = '#333';
                 ctx.font = '16px Arial';
                 ctx.textAlign = 'center';
-                ctx.fillText((relativeFrequencies[i] * 100).toFixed(1) + '%', 
+                ctx.fillText((heightsToUse[i] * 100).toFixed(1) + '%',
                             x + barWidth / 2, y - 5);
-                
+
                 // Reset fill style for next bar
                 ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
             }
             
+            // Calculate X-axis end position once
+            const lastBarX = margin.left + halfBarWidth + (5 * barWidth) + barWidth;
+            const xAxisEnd = lastBarX + halfBarWidth;
+
             // Draw theoretical probability line
             const theoreticalY = margin.top + chartHeight - (0.1667 / maxRelFreq) * chartHeight;
             ctx.strokeStyle = 'rgba(245, 87, 108, 0.8)';
@@ -374,16 +419,16 @@
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
             ctx.moveTo(margin.left, theoreticalY);
-            ctx.lineTo(margin.left + chartWidth, theoreticalY);
+            ctx.lineTo(xAxisEnd, theoreticalY);
             ctx.stroke();
             ctx.setLineDash([]);
-            
-            // Label for theoretical probability
+
+            // Label for theoretical probability (under the line)
             ctx.fillStyle = 'rgba(245, 87, 108, 1)';
-            ctx.font = '16px Arial';
-            ctx.textAlign = 'right';
-            ctx.fillText('Theoretical: 16.67%', margin.left + chartWidth - 5, theoreticalY - 5);
-            
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('16.67%', margin.left + chartWidth / 2, theoreticalY + 15);
+
             // Draw axes
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
@@ -391,8 +436,8 @@
             // Y-axis
             ctx.moveTo(margin.left, margin.top);
             ctx.lineTo(margin.left, margin.top + chartHeight);
-            // X-axis
-            ctx.lineTo(margin.left + chartWidth, margin.top + chartHeight);
+            // X-axis - extend to half a bar after last column
+            ctx.lineTo(xAxisEnd, margin.top + chartHeight);
             ctx.stroke();
             
             // X-axis labels
@@ -423,10 +468,57 @@
             ctx.rotate(-Math.PI / 2);
             ctx.font = '16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('Relative Frequency', 0, 0);
+            ctx.fillText('Rel. Frequency', 0, 0);
             ctx.restore();
         }
-        
+
+        function animateHistogramColumns(affectedColumns) {
+            // Calculate new frequencies
+            const frequencies = [0, 0, 0, 0, 0, 0];
+            allRolls.forEach(roll => {
+                frequencies[roll - 1]++;
+            });
+
+            // Set new target heights
+            const newRelativeFrequencies = frequencies.map(f => f / allRolls.length);
+            targetHeights = newRelativeFrequencies.slice();
+
+            // Start animation if not already running
+            if (animationId === null) {
+                animateHeightTransition();
+            }
+        }
+
+        function animateHeightTransition() {
+            const animationSpeed = 0.1; // Adjust for faster/slower animation
+            let animationComplete = true;
+
+            // Interpolate towards target heights
+            for (let i = 0; i < 6; i++) {
+                const diff = targetHeights[i] - currentHeights[i];
+                if (Math.abs(diff) > 0.001) {
+                    currentHeights[i] += diff * animationSpeed;
+                    animationComplete = false;
+                } else {
+                    currentHeights[i] = targetHeights[i];
+                }
+            }
+
+            // Redraw with current animated heights
+            const frequencies = [0, 0, 0, 0, 0, 0];
+            allRolls.forEach(roll => {
+                frequencies[roll - 1]++;
+            });
+            drawHistogram(frequencies, true);
+
+            // Continue animation or stop
+            if (!animationComplete) {
+                animationId = requestAnimationFrame(animateHeightTransition);
+            } else {
+                animationId = null;
+            }
+        }
+
         // Initialize display
         updateDisplay();
     </script>
