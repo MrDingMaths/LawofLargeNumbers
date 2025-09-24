@@ -383,8 +383,8 @@
             const halfBarWidth = barWidth / 2;
 
             // Draw bars
-            ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
-            ctx.strokeStyle = 'rgba(100, 100, 100, 1)';
+            ctx.fillStyle = 'rgba(65, 105, 225, .7)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 1)';
             ctx.lineWidth = 2;
 
             for (let i = 0; i < 6; i++) {
@@ -405,7 +405,7 @@
                             x + barWidth / 2, y - 5);
 
                 // Reset fill style for next bar
-                ctx.fillStyle = 'rgba(50, 150, 250, 0.2)';
+                ctx.fillStyle = 'rgba(65, 105, 225, .7)';
             }
             
             // Calculate X-axis end position once
@@ -414,7 +414,7 @@
 
             // Draw theoretical probability line
             const theoreticalY = margin.top + chartHeight - (0.1667 / maxRelFreq) * chartHeight;
-            ctx.strokeStyle = 'rgba(245, 87, 108, 0.8)';
+            ctx.strokeStyle = 'rgba(230, 62, 98, 1)';
             ctx.lineWidth = 2;
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
@@ -424,13 +424,13 @@
             ctx.setLineDash([]);
 
             // Label for theoretical probability (under the line)
-            ctx.fillStyle = 'rgba(245, 87, 108, 1)';
+            ctx.fillStyle = 'rgba(230, 62, 98, 1)';
             ctx.font = '14px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('16.67%', margin.left + chartWidth / 2, theoreticalY + 15);
+            ctx.fillText('16.67%', margin.left + chartWidth, theoreticalY + 15);
 
             // Draw axes
-            ctx.strokeStyle = '#333';
+            ctx.strokeStyle = '#000000';
             ctx.lineWidth = 2;
             ctx.beginPath();
             // Y-axis
